@@ -7,30 +7,34 @@ from nltk import word_tokenize
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 
-class EdgeWordNgarmTfidfVectorizer(TfidfVectorizer):
+class EdgeCharNgramTfidfVectorizer(TfidfVectorizer):
     def __init__(self, edge_ngrams_range, **kwargs):
         super().__init__(**kwargs)
         self.edge_ngrams_range = edge_ngrams_range
             
     
-    def _word_ngrams(self, tokens, stop_words=None):
-        # First get tokens without stop words       
-        tokens = super()._word_ngrams(tokens, None)        
-       
-        space_join = " ".join
-        ln = len(tokens)-1
-        new_tokens=[]
+    def _char_ngrams(self, text_document):
+        # First get ngrams without stop words      
+        ngrams = super()._char_ngrams(text_document)
+        min_n, max_n = self.edge_ngrams_range         
+        space_join = "".join
+        if max_n > len(ngrams)-1:
+            ln = len(ngrams)-1
+        else: 
+            ln = max(max_n, len(ngrams)-1)        
+        new_ngrams=[]
         for i in range(ln):              
-            new_tokens.append(space_join(tokens[:-ln+i]))            
-        new_tokens.append(space_join(tokens))
-       
-        return new_tokens
+            new_ngrams.append(space_join(ngrams[:-ln+i]))
+            if i >= max_n-1:break
+        new_ngrams.append(space_join(ngrams))
+        #print(new_ngrams)
+        return new_ngrams
 
 def preprocess(doc):
     doc = doc.lower()  # Lower the text.
     doc = word_tokenize(doc)  # Split into words.
     #doc = [w for w in doc if not w in stop_words]  # Remove stopwords.
-    doc = [w for w in doc if w.isalpha()]  # Remove numbers and punctuation.
+    #doc = [w for w in doc if w.isalpha()]  # Remove numbers and punctuation.
     return doc
 
 def get_clean_text(list_strings):
@@ -47,8 +51,8 @@ def similarity_rank(query, vectorizer, text_list):
     cosine_similarities = linear_kernel(q_vz, vz).flatten()
     related_docs_indices = cosine_similarities.argsort()[:-5:-1]
     for idx in related_docs_indices:
-        #print(f'{text_list[idx]}, \t  {cosine_similarities[idx]}')
-        print(text_list[idx])
+        print(f"{text_list[idx]}, \t  {cosine_similarities[idx]}")
+       
 
 
 if __name__=='__main__':
@@ -67,24 +71,30 @@ if __name__=='__main__':
             'ADVANCED ENGINEERING', 	  
             'ADVANCED SEED']
     clean_text = get_clean_text(names)
-    print(clean_text)
     for s in clean_text:
         print(s)
-    vectorizer = EdgeWordNgarmTfidfVectorizer(edge_ngrams_range=(1,5), token_pattern=r'\S+')
+    vectorizer = EdgeCharNgramTfidfVectorizer(edge_ngrams_range=(1,5),  analyzer='char', token_pattern=r'\S+')
     vz = vectorizer.fit_transform(clean_text)
     print()
     print(vz.shape)
     print(vectorizer.get_feature_names())
 
+   
+    q = 'D'
+    print(f"For query: {q}****************")
+    similarity_rank(q, vectorizer, clean_text)
+
+    print("****************")
+    q = 'DH'
+    print(f"For query: {q}****************")
+    similarity_rank(q, vectorizer, clean_text)
+
     print("****************")
     q = 'DHL'
+    print(f"For query: {q}****************")
     similarity_rank(q, vectorizer, clean_text)
 
     print("****************")
-    q = 'DHL GLOBAL'
+    q = 'ADVANCE'
+    print(f"For query: {q}****************")
     similarity_rank(q, vectorizer, clean_text)
-
-    print("****************")
-    q = 'ADVANCED CARGO'
-    similarity_rank(q, vectorizer, clean_text)
-
