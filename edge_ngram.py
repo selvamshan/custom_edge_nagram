@@ -7,7 +7,7 @@ from nltk import word_tokenize
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 
-class EdgeWordNgramTfidfVectorizer(TfidfVectorizer):
+class EdgeNgramTfidfVectorizer(TfidfVectorizer):
     def __init__(self, edge_ngrams_range, **kwargs):
         super().__init__(**kwargs)
         self.edge_ngrams_range = edge_ngrams_range
@@ -25,6 +25,26 @@ class EdgeWordNgramTfidfVectorizer(TfidfVectorizer):
         new_tokens.append(space_join(tokens))
        
         return new_tokens
+
+    def _char_ngrams(self, text_document):
+        # First get ngrams without stop words      
+        ngrams = super()._char_ngrams(text_document)
+        min_n, max_n = self.edge_ngrams_range         
+        space_join = "".join
+        if max_n > len(ngrams)-1:
+            ln = len(ngrams)-1
+        else: 
+            ln = max(max_n, len(ngrams)-1)        
+        new_ngrams=[]
+        for i in range(ln):              
+            new_ngrams.append(space_join(ngrams[:-ln+i]))
+            if i >= max_n-1:break
+        new_ngrams.append(space_join(ngrams))
+        #print(new_ngrams)
+        return new_ngrams
+
+
+    
 
 def preprocess(doc):
     doc = doc.lower()  # Lower the text.
@@ -47,8 +67,8 @@ def similarity_rank(query, vectorizer, text_list):
     cosine_similarities = linear_kernel(q_vz, vz).flatten()
     related_docs_indices = cosine_similarities.argsort()[:-5:-1]
     for idx in related_docs_indices:
-        #print(f'{text_list[idx]}, \t  {cosine_similarities[idx]}')
-        print(text_list[idx])
+        print(f'{text_list[idx]}, \t  {cosine_similarities[idx]}')
+        #print(text_list[idx])
 
 
 if __name__=='__main__':
@@ -70,7 +90,7 @@ if __name__=='__main__':
     print(clean_text)
     for s in clean_text:
         print(s)
-    vectorizer = EdgeWordNgramTfidfVectorizer(edge_ngrams_range=(1,5), token_pattern=r'\S+')
+    vectorizer = EdgeNgramTfidfVectorizer(edge_ngrams_range=(1,5), analyzer='word', token_pattern=r'\S+')
     vz = vectorizer.fit_transform(clean_text)
     print()
     print(vz.shape)
@@ -87,4 +107,33 @@ if __name__=='__main__':
     print("****************")
     q = 'ADVANCED CARGO'
     similarity_rank(q, vectorizer, names)
+
+    vectorizer = EdgeNgramTfidfVectorizer(edge_ngrams_range=(1,5),  analyzer='char', token_pattern=r'\S+')
+    vz = vectorizer.fit_transform(clean_text)
+    print()
+    print(vz.shape)
+    print(vectorizer.get_feature_names())
+
+   
+    q = 'D'
+    print(f"For query: {q}****************")
+    similarity_rank(q, vectorizer, names)
+
+    print("****************")
+    q = 'DH'
+    print(f"For query: {q}****************")
+    similarity_rank(q, vectorizer, names)
+
+    print("****************")
+    q = 'DHL'
+    print(f"For query: {q}****************")
+    similarity_rank(q, vectorizer, names)
+
+    print("****************")
+    q = 'ADVANCE'
+    print(f"For query: {q}****************")
+    similarity_rank(q, vectorizer, names)
+
+
+
 

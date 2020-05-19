@@ -82,19 +82,19 @@ if __name__=='__main__':
    
     q = 'D'
     print(f"For query: {q}****************")
-    similarity_rank(q, vectorizer, clean_text)
+    similarity_rank(q, vectorizer, names)
 
     print("****************")
     q = 'DH'
     print(f"For query: {q}****************")
-    similarity_rank(q, vectorizer, clean_text)
+    similarity_rank(q, vectorizer, names)
 
     print("****************")
     q = 'DHL'
     print(f"For query: {q}****************")
-    similarity_rank(q, vectorizer, clean_text)
+    similarity_rank(q, vectorizer, names)
 
     print("****************")
     q = 'ADVANCE'
     print(f"For query: {q}****************")
-    similarity_rank(q, vectorizer, clean_text)
+    similarity_rank(q, vectorizer, names)
